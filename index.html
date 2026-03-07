@@ -460,7 +460,9 @@
   <header>
     <div class="site-title">diglist</div>
     <div class="header-right">
-      <span class="count" id="count-label"></span>
+      <button class="btn secondary" onclick="exportJSON()">↓ exporter</button>
+      <button class="btn secondary" onclick="document.getElementById('import-input').click()">↑ importer</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importJSON(event)">
       <button class="btn" onclick="openAddModal()">+ ajouter</button>
     </div>
   </header>
@@ -643,8 +645,7 @@ function render() {
   const active = filtered.filter(i => i.status !== 'done');
   const done = filtered.filter(i => i.status === 'done');
 
-  document.getElementById('count-label').textContent =
-    `${items.filter(i => i.status !== 'done').length} en attente`;
+
 
   const list = document.getElementById('list');
 
