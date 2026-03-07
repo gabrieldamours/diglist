@@ -33,6 +33,12 @@ exports.handler = async function (event) {
 
     const html = await res.text();
 
+    // Extract og:image (artwork) - may not be present in server-rendered HTML
+    const ogImageMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
+    let artworkUrl = ogImageMatch ? ogImageMatch[1] : null;
+
+    let embedUrl = null;
+
     // Method 1: data-tralbum attribute (most common)
     const tralbumMatch = html.match(/data-tralbum="([^"]+)"/);
     if (tralbumMatch) {
@@ -41,50 +47,64 @@ exports.handler = async function (event) {
         const id = tralbum.id;
         const isAlbum = url.includes('/album/');
         const type = isAlbum ? 'album' : 'track';
-        const embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
-        return { statusCode: 200, headers, body: JSON.stringify({ embedUrl }) };
+        embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
       } catch(e) {}
     }
 
     // Method 2: TralbumData in inline script
-    const tralbumDataMatch = html.match(/TralbumData\s*=\s*(\{[\s\S]*?\});\s*\n/);
-    if (tralbumDataMatch) {
-      try {
-        const data = JSON.parse(tralbumDataMatch[1]);
-        const id = data.id;
-        const isAlbum = url.includes('/album/');
-        const type = isAlbum ? 'album' : 'track';
-        const embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
-        return { statusCode: 200, headers, body: JSON.stringify({ embedUrl }) };
-      } catch(e) {}
+    if (!embedUrl) {
+      const tralbumDataMatch = html.match(/TralbumData\s*=\s*(\{[\s\S]*?\});\s*\n/);
+      if (tralbumDataMatch) {
+        try {
+          const data = JSON.parse(tralbumDataMatch[1]);
+          const id = data.id;
+          const isAlbum = url.includes('/album/');
+          const type = isAlbum ? 'album' : 'track';
+          embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
+        } catch(e) {}
+      }
     }
 
-    // Method 3: og:video or og:audio meta tag with embed URL
-    const ogVideoMatch = html.match(/<meta property="og:video" content="([^"]+)"/);
-    if (ogVideoMatch) {
-      return { statusCode: 200, headers, body: JSON.stringify({ embedUrl: ogVideoMatch[1] }) };
+    // Method 3: og:video meta tag
+    if (!embedUrl) {
+      const ogVideoMatch = html.match(/<meta property="og:video" content="([^"]+)"/);
+      if (ogVideoMatch) embedUrl = ogVideoMatch[1];
     }
 
     // Method 4: direct EmbeddedPlayer URL in page source
-    const embeddedMatch = html.match(/https:\/\/bandcamp\.com\/EmbeddedPlayer\/(?:album|track)=(\d+)[^"']*/);
-    if (embeddedMatch) {
-      let embedUrl = embeddedMatch[0]
-        .replace(/bgcol=[a-fA-F0-9]+/, 'bgcol=111111')
-        .replace(/linkcol=[a-fA-F0-9]+/, 'linkcol=e8d5a3');
-      return { statusCode: 200, headers, body: JSON.stringify({ embedUrl }) };
+    if (!embedUrl) {
+      const embeddedMatch = html.match(/https:\/\/bandcamp\.com\/EmbeddedPlayer\/(?:album|track)=(\d+)[^"']*/);
+      if (embeddedMatch) {
+        embedUrl = embeddedMatch[0]
+          .replace(/bgcol=[a-fA-F0-9]+/, 'bgcol=111111')
+          .replace(/linkcol=[a-fA-F0-9]+/, 'linkcol=e8d5a3');
+      }
     }
 
-    // Method 5: extract numeric ID from canonical URL in page
-    const canonicalMatch = html.match(/<link rel="canonical" href="([^"]+)"/);
-    const idFromMeta = html.match(/"id":(\d+),"type":"(?:album|track)"/);
-    if (idFromMeta) {
-      const isAlbum = url.includes('/album/');
-      const type = isAlbum ? 'album' : 'track';
-      const embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${idFromMeta[1]}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
-      return { statusCode: 200, headers, body: JSON.stringify({ embedUrl }) };
+    // Method 5: numeric ID from meta
+    if (!embedUrl) {
+      const idFromMeta = html.match(/"id":(\d+),"type":"(?:album|track)"/);
+      if (idFromMeta) {
+        const isAlbum = url.includes('/album/');
+        const type = isAlbum ? 'album' : 'track';
+        embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${idFromMeta[1]}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
+      }
     }
 
-    return { statusCode: 404, headers, body: JSON.stringify({ error: "Embed introuvable — cet album est peut-être privé ou non embeddable" }) };
+    if (!embedUrl && !artworkUrl) {
+      return { statusCode: 404, headers, body: JSON.stringify({ error: "Embed introuvable — cet album est peut-être privé ou non embeddable" }) };
+    }
+
+    // If no og:image, derive artwork URL from embed ID
+    // Bandcamp pattern: https://f4.bcbits.com/img/a{ID}_16.jpg
+    if (!artworkUrl && embedUrl) {
+      const idMatch = embedUrl.match(/(?:album|track)=(\d+)/);
+      if (idMatch) {
+        artworkUrl = `https://f4.bcbits.com/img/a${idMatch[1]}_16.jpg`;
+      }
+    }
+
+    return { statusCode: 200, headers, body: JSON.stringify({ embedUrl, artworkUrl }) };
 
   } catch (err) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
