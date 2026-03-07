@@ -137,6 +137,42 @@
     border-bottom: 1px solid var(--border);
   }
 
+  .batch-bar {
+    padding: 10px 32px;
+    background: #1a1a12;
+    border-bottom: 1px solid var(--border);
+    display: none;
+    gap: 10px;
+    align-items: center;
+  }
+  .batch-bar.visible { display: flex; }
+  .batch-label { font-size: 11px; color: var(--accent); }
+
+  .item-checkbox {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 3px;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .item-checkbox:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .item-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -1px;
+    left: 1px;
+    font-size: 10px;
+    color: #0e0e0e;
+  }
+
   .search-input, .filter-select {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -442,6 +478,18 @@
     </select>
   </div>
 
+  <div class="batch-bar" id="batch-bar">
+    <span class="batch-label" id="batch-label">0 sélectionnés</span>
+    <select class="filter-select" id="batch-status">
+      <option value="">— changer le statut —</option>
+      <option value="pending">À écouter</option>
+      <option value="listening">En cours</option>
+      <option value="done">Écouté</option>
+    </select>
+    <button class="btn" onclick="applyBatchStatus()">appliquer</button>
+    <button class="btn secondary" onclick="clearSelection()">annuler</button>
+  </div>
+
   <div class="list" id="list"></div>
 </div>
 
@@ -631,9 +679,10 @@ function render() {
       div.className = 'item' + (sectionClass ? ' ' + sectionClass : '');
       div.dataset.id = item.id;
       div.style.display = 'grid';
-      div.style.gridTemplateColumns = '1fr auto';
+      div.style.gridTemplateColumns = 'auto 1fr auto';
       div.style.gridTemplateRows = 'auto auto';
       div.innerHTML = `
+        <input type="checkbox" class="item-checkbox" id="chk-${item.id}" onchange="onCheckboxChange()" style="margin-right:14px">
         <div class="item-left">
           <div class="item-header">
             <span class="item-title" style="cursor:default">${esc(item.title || 'Sans titre')}</span>
@@ -672,6 +721,54 @@ function filterByTag(tag) {
   render();
 }
 
+// ── Batch selection ───────────────────────────────────────
+function getSelectedIds() {
+  return [...document.querySelectorAll('.item-checkbox:checked')].map(el => el.id.replace('chk-', ''));
+}
+
+function onCheckboxChange() {
+  const ids = getSelectedIds();
+  const bar = document.getElementById('batch-bar');
+  if (ids.length > 0) {
+    bar.classList.add('visible');
+    document.getElementById('batch-label').textContent = `${ids.length} sélectionné${ids.length > 1 ? 's' : ''}`;
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function clearSelection() {
+  document.querySelectorAll('.item-checkbox:checked').forEach(el => el.checked = false);
+  document.getElementById('batch-bar').classList.remove('visible');
+  document.getElementById('batch-status').value = '';
+}
+
+async function applyBatchStatus() {
+  const status = document.getElementById('batch-status').value;
+  if (!status) { showToast('Choisis un statut'); return; }
+  const ids = getSelectedIds();
+  if (ids.length === 0) return;
+
+  const btn = document.querySelector('#batch-bar .btn');
+  btn.disabled = true;
+
+  try {
+    await Promise.all(ids.map(id => {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.status = status;
+      return apiUpsert(item);
+    }));
+    clearSelection();
+    render();
+    showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} mis à jour`);
+  } catch(e) {
+    showToast('Erreur lors de la mise à jour');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ── Embed player ──────────────────────────────────────────
 async function togglePlayer(id, url) {
   const playerEl = document.getElementById(`player-${id}`);
@@ -680,11 +777,25 @@ async function togglePlayer(id, url) {
   if (playerEl.classList.contains('open')) {
     playerEl.classList.remove('open');
     playerEl.innerHTML = '';
+    const btn = document.querySelector(`#chk-${id}`)?.closest('.item')?.querySelector('.play-btn');
+    if (btn) btn.textContent = '▶ écouter';
     return;
   }
 
+  // Close any other open player and reset their buttons
+  document.querySelectorAll('.item-player.open').forEach(el => {
+    el.classList.remove('open');
+    el.innerHTML = '';
+    const otherId = el.id.replace('player-', '');
+    const otherBtn = document.querySelector(`#chk-${otherId}`)?.closest('.item')?.querySelector('.play-btn');
+    if (otherBtn) otherBtn.textContent = '▶ écouter';
+  });
+
   playerEl.classList.add('open');
   playerEl.innerHTML = '<div class="player-loading">chargement du player...</div>';
+
+  const playBtn = document.querySelector(`#chk-${id}`)?.closest('.item')?.querySelector('.play-btn');
+  if (playBtn) playBtn.textContent = '✕ fermer';
 
   try {
     const res = await fetch(`/.netlify/functions/embed?url=${encodeURIComponent(url)}`);
