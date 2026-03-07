@@ -1,7 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
-export default async function handler(event) {
+exports.handler = async function (event) {
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
@@ -33,4 +33,24 @@ export default async function handler(event) {
       const body = JSON.parse(event.body);
       const res = await fetch(base, {
         method: "POST",
-        headers: { ...sbHeaders, Prefer: "resolution=merge-du
+        headers: { ...sbHeaders, Prefer: "resolution=merge-duplicates,return=representation" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
+
+    if (event.httpMethod === "DELETE") {
+      const { id } = JSON.parse(event.body);
+      const res = await fetch(`${base}?id=eq.${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: sbHeaders,
+      });
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
+    }
+
+    return { statusCode: 405, headers, body: JSON.stringify({ error: "Method not allowed" }) };
+  } catch (err) {
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+  }
+};
