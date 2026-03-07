@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>diglist</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --accent: #e8d5a3;
+    --accent2: #c4956a;
+    --text: #e8e4dc;
+    --muted: #6b6560;
+    --danger: #c45a5a;
+    --tag-bg: #1e1c18;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* ── Auth screen ── */
+  #auth-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 16px;
+  }
+
+  .auth-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .auth-sub {
+    color: var(--muted);
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .auth-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .auth-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 10px 16px;
+    outline: none;
+    width: 240px;
+    transition: border-color 0.15s;
+  }
+  .auth-input:focus { border-color: var(--accent); }
+
+  .auth-error {
+    color: var(--danger);
+    font-size: 11px;
+    height: 14px;
+  }
+
+  /* ── App ── */
+  #app { display: none; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .site-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-style: italic;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .count { color: var(--muted); font-size: 11px; }
+
+  .btn {
+    background: var(--accent);
+    color: #0e0e0e;
+    border: none;
+    padding: 8px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn.secondary:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+
+  .toolbar {
+    padding: 14px 32px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-input, .filter-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 7px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input { flex: 1; max-width: 320px; }
+  .search-input::placeholder { color: var(--muted); }
+  .search-input:focus, .filter-select:focus { border-color: var(--accent); }
+  .filter-select { cursor: pointer; }
+  .filter-select option { background: var(--surface); }
+
+  .list { padding: 0 32px; }
+
+  .item {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+  .item-header {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .item-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    word-break: break-word;
+  }
+  .item-title:hover { color: var(--accent); }
+
+  .item-artist { color: var(--accent2); font-size: 12px; }
+
+  .item-link {
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .item-link:hover { color: var(--accent); }
+
+  .platform {
+    display: inline-block;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    margin-right: 6px;
+    font-size: 10px;
+    color: var(--accent2);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
+  .item-note {
+    margin-top: 8px;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .item-tags {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .tag {
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.1s, color 0.1s;
+    letter-spacing: 0.04em;
+  }
+  .tag:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .item-meta {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+    display: flex;
+    gap: 12px;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .status-dot.pending { background: var(--muted); }
+  .status-dot.listening { background: #e8c86a; }
+  .status-dot.done { background: #6ac46a; }
+
+  .item-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .action-btn.done-btn.active { border-color: #6ac46a; color: #6ac46a; }
+
+  .listened-section { opacity: 0.55; }
+  .listened-section .item-title { text-decoration: line-through; text-decoration-color: var(--muted); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+  .field textarea { min-height: 80px; }
+  .field select { cursor: pointer; }
+  .field select option { background: var(--surface); }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  .empty {
+    padding: 80px 32px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-style: italic;
+    color: var(--border);
+    margin-bottom: 8px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 20px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 300;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- Auth -->
+<div id="auth-screen">
+  <div class="auth-title">diglist</div>
+  <div class="auth-sub">entre ton mot de passe pour continuer</div>
+  <div class="auth-row">
+    <input class="auth-input" type="password" id="auth-input" placeholder="mot de passe" onkeydown="if(event.key==='Enter') tryAuth()">
+    <button class="btn" onclick="tryAuth()">entrer</button>
+  </div>
+  <div class="auth-error" id="auth-error"></div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <div class="site-title">diglist</div>
+    <div class="header-right">
+      <span class="count" id="count-label"></span>
+      <button class="btn" onclick="openAddModal()">+ ajouter</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input class="search-input" type="text" placeholder="chercher..." id="search-input" oninput="render()">
+    <select class="filter-select" id="filter-status" onchange="render()">
+      <option value="all">tout</option>
+      <option value="pending">à écouter</option>
+      <option value="listening">en cours</option>
+      <option value="done">écouté</option>
+    </select>
+    <select class="filter-select" id="filter-tag" onchange="render()">
+      <option value="">tous les tags</option>
+    </select>
+  </div>
+
+  <div class="list" id="list"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Ajouter</div>
+    <div class="field">
+      <label>Lien (Bandcamp, Soundcloud, etc.)</label>
+      <input type="url" id="f-url" placeholder="https://..." oninput="autofillFromUrl()">
+    </div>
+    <div class="field">
+      <label>Titre / album</label>
+      <input type="text" id="f-title" placeholder="Nom de l'album ou du track">
+    </div>
+    <div class="field">
+      <label>Artiste</label>
+      <input type="text" id="f-artist" placeholder="Nom de l'artiste">
+    </div>
+    <div class="field">
+      <label>Tags (séparés par des virgules)</label>
+      <input type="text" id="f-tags" placeholder="ambient, électro, local...">
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="f-note" placeholder="Recommandé par quelqu'un ? Contexte ?"></textarea>
+    </div>
+    <div class="field">
+      <label>Statut</label>
+      <select id="f-status">
+        <option value="pending">À écouter</option>
+        <option value="listening">En cours</option>
+        <option value="done">Écouté</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">annuler</button>
+      <button class="btn" id="save-btn" onclick="saveItem()">sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Auth ──────────────────────────────────────────────────
+// Set your password here — this will NOT be committed to the repo
+// when you deploy to Netlify, set DIGLIST_PASSWORD as an env variable instead
+const PASSWORD = "changeme";
+
+function tryAuth() {
+  const val = document.getElementById('auth-input').value;
+  if (val === PASSWORD) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadItems();
+  } else {
+    document.getElementById('auth-error').textContent = 'mot de passe incorrect';
+    document.getElementById('auth-input').value = '';
+  }
+}
+
+// ── State ─────────────────────────────────────────────────
+let items = [];
+let editingId = null;
+
+// ── API ───────────────────────────────────────────────────
+async function apiGet() {
+  const res = await fetch('/.netlify/functions/items');
+  if (!res.ok) throw new Error('Erreur chargement');
+  const rows = await res.json();
+  return rows.map(r => ({ id: r.id, ...r.data }));
+}
+
+async function apiUpsert(item) {
+  const { id, ...rest } = item;
+  const res = await fetch('/.netlify/functions/items', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, data: rest }),
+  });
+  if (!res.ok) throw new Error('Erreur sauvegarde');
+}
+
+async function apiDelete(id) {
+  const res = await fetch('/.netlify/functions/items', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) throw new Error('Erreur suppression');
+}
+
+// ── Load ──────────────────────────────────────────────────
+async function loadItems() {
+  document.getElementById('list').innerHTML = '<div class="empty"><div class="empty-title">chargement...</div></div>';
+  try {
+    items = await apiGet();
+    render();
+  } catch(e) {
+    showToast('Erreur de connexion à la base de données');
+  }
+}
+
+// ── Render ────────────────────────────────────────────────
+function getAllTags() {
+  const all = new Set();
+  items.forEach(i => (i.tags || []).forEach(t => all.add(t)));
+  return [...all].sort();
+}
+
+function updateTagFilter() {
+  const sel = document.getElementById('filter-tag');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">tous les tags</option>';
+  getAllTags().forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    if (t === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function detectPlatform(url) {
+  if (!url) return null;
+  if (url.includes('bandcamp.com')) return 'Bandcamp';
+  if (url.includes('soundcloud.com')) return 'SoundCloud';
+  if (url.includes('spotify.com')) return 'Spotify';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube';
+  if (url.includes('music.apple.com')) return 'Apple Music';
+  return 'Lien';
+}
+
+function render() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const statusFilter = document.getElementById('filter-status').value;
+  const tagFilter = document.getElementById('filter-tag').value;
+
+  updateTagFilter();
+
+  let filtered = items.filter(item => {
+    if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+    if (tagFilter && !(item.tags || []).includes(tagFilter)) return false;
+    if (search) {
+      const hay = [item.title, item.artist, item.note, ...(item.tags||[])].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  const active = filtered.filter(i => i.status !== 'done');
+  const done = filtered.filter(i => i.status === 'done');
+
+  document.getElementById('count-label').textContent =
+    `${items.filter(i => i.status !== 'done').length} en attente`;
+
+  const list = document.getElementById('list');
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="empty-title">La liste est vide</div><div>Ajoute un lien Bandcamp pour commencer</div></div>`;
+    return;
+  }
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="empty-title">Rien trouvé</div></div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+
+  function renderItems(arr, sectionClass) {
+    arr.forEach(item => {
+      const platform = detectPlatform(item.url);
+      const platformBadge = platform ? `<span class="platform">${platform}</span>` : '';
+      const linkEl = item.url
+        ? `<a class="item-link" href="${item.url}" target="_blank" rel="noopener">${platformBadge}${item.url}</a>`
+        : '';
+      const tagsEl = (item.tags||[]).length > 0
+        ? `<div class="item-tags">${item.tags.map(t => `<span class="tag" onclick="filterByTag('${esc(t)}')">${esc(t)}</span>`).join('')}</div>`
+        : '';
+      const noteEl = item.note ? `<div class="item-note">${esc(item.note)}</div>` : '';
+      const statusLabel = { pending: 'à écouter', listening: 'en cours', done: 'écouté' }[item.status] || '';
+      const addedDate = item.addedAt ? new Date(item.addedAt).toLocaleDateString('fr-FR') : '';
+
+      const div = document.createElement('div');
+      div.className = 'item' + (sectionClass ? ' ' + sectionClass : '');
+      div.dataset.id = item.id;
+      div.innerHTML = `
+        <div class="item-left">
+          <div class="item-header">
+            ${item.url
+              ? `<a class="item-title" href="${item.url}" target="_blank" rel="noopener">${esc(item.title || 'Sans titre')}</a>`
+              : `<span class="item-title">${esc(item.title || 'Sans titre')}</span>`}
+            ${item.artist ? `<span class="item-artist">${esc(item.artist)}</span>` : ''}
+          </div>
+          ${linkEl}
+          ${noteEl}
+          ${tagsEl}
+          <div class="item-meta">
+            <span><span class="status-dot ${item.status||'pending'}"></span>${statusLabel}</span>
+            ${addedDate ? `<span>ajouté le ${addedDate}</span>` : ''}
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="action-btn done-btn ${item.status==='done'?'active':''}" onclick="toggleDone('${item.id}')" title="Marquer écouté">✓</button>
+          <button class="action-btn" onclick="openEditModal('${item.id}')">éditer</button>
+          <button class="action-btn" onclick="deleteItem('${item.id}')" style="color:var(--danger);border-color:transparent">✕</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  renderItems(active, '');
+  if (done.length > 0) renderItems(done, 'listened-section');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function filterByTag(tag) {
+  document.getElementById('filter-tag').value = tag;
+  render();
+}
+
+// ── Modal ─────────────────────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Ajouter';
+  ['f-url','f-title','f-artist','f-tags','f-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-status').value = 'pending';
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('f-url').focus();
+}
+
+function openEditModal(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Éditer';
+  document.getElementById('f-url').value = item.url || '';
+  document.getElementById('f-title').value = item.title || '';
+  document.getElementById('f-artist').value = item.artist || '';
+  document.getElementById('f-tags').value = (item.tags||[]).join(', ');
+  document.getElementById('f-note').value = item.note || '';
+  document.getElementById('f-status').value = item.status || 'pending';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
+});
+
+function autofillFromUrl() {
+  const url = document.getElementById('f-url').value.trim();
+  if (!url.includes('bandcamp.com')) return;
+  try {
+    const u = new URL(url);
+    const artistField = document.getElementById('f-artist');
+    const titleField = document.getElementById('f-title');
+    if (artistField.value === '' && u.hostname.includes('.bandcamp.com')) {
+      artistField.value = u.hostname.replace('.bandcamp.com', '').replace(/-/g, ' ');
+    }
+    const parts = u.pathname.split('/').filter(Boolean);
+    if (titleField.value === '' && parts.length >= 2) {
+      titleField.value = parts[1].replace(/-/g, ' ');
+    }
+  } catch(e) {}
+}
+
+async function saveItem() {
+  const url = document.getElementById('f-url').value.trim();
+  const title = document.getElementById('f-title').value.trim();
+  const artist = document.getElementById('f-artist').value.trim();
+  const tagsRaw = document.getElementById('f-tags').value.trim();
+  const note = document.getElementById('f-note').value.trim();
+  const status = document.getElementById('f-status').value;
+
+  if (!url && !title) { showToast('Ajoute au moins un lien ou un titre.'); return; }
+
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+
+  try {
+    if (editingId) {
+      const idx = items.findIndex(i => i.id === editingId);
+      const updated = { ...items[idx], url, title, artist, tags, note, status };
+      await apiUpsert(updated);
+      items[idx] = updated;
+    } else {
+      const item = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+        url, title, artist, tags, note, status,
+        addedAt: new Date().toISOString()
+      };
+      await apiUpsert(item);
+      items.unshift(item);
+    }
+    document.getElementById('modal').classList.remove('open');
+    render();
+  } catch(e) {
+    showToast('Erreur lors de la sauvegarde');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function toggleDone(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.status = item.status === 'done' ? 'pending' : 'done';
+  try {
+    await apiUpsert(item);
+    render();
+  } catch(e) {
+    showToast('Erreur lors de la mise à jour');
+  }
+}
+
+async function deleteItem(id) {
+  if (!confirm('Supprimer cet item ?')) return;
+  try {
+    await apiDelete(id);
+    items = items.filter(i => i.id !== id);
+    render();
+  } catch(e) {
+    showToast('Erreur lors de la suppression');
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
