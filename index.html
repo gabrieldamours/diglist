@@ -553,6 +553,7 @@ const PASSWORD = "changeme";
 function tryAuth() {
   const val = document.getElementById('auth-input').value;
   if (val === PASSWORD) {
+    sessionStorage.setItem('diglist-auth', val);
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     loadItems();
@@ -561,6 +562,16 @@ function tryAuth() {
     document.getElementById('auth-input').value = '';
   }
 }
+
+// Auto-login if password is stored in sessionStorage
+(function() {
+  const saved = sessionStorage.getItem('diglist-auth');
+  if (saved === PASSWORD) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadItems();
+  }
+})();
 
 // ── State ─────────────────────────────────────────────────
 let items = [];
