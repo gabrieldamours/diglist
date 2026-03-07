@@ -19,34 +19,30 @@ exports.handler = async function (event) {
   }
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; diglist/1.0)",
-      },
-    });
+    const oembedRes = await fetch(
+      `https://bandcamp.com/oembed?url=${encodeURIComponent(url)}&format=json`
+    );
 
-    if (!res.ok) {
-      return { statusCode: 502, headers, body: JSON.stringify({ error: "Impossible de charger la page Bandcamp" }) };
+    if (!oembedRes.ok) {
+      return { statusCode: 502, headers, body: JSON.stringify({ error: "oEmbed indisponible pour cette URL" }) };
     }
 
-    const html = await res.text();
+    const oembed = await oembedRes.json();
 
-    // Extract embed URL from Bandcamp page
-    // Bandcamp embeds follow the pattern: https://bandcamp.com/EmbeddedPlayer/album=XXXXXXX or /track=XXXXXXX
-    const albumMatch = html.match(/https:\/\/bandcamp\.com\/EmbeddedPlayer\/album=(\d+)/);
-    const trackMatch = html.match(/https:\/\/bandcamp\.com\/EmbeddedPlayer\/track=(\d+)/);
-
-    let embedUrl = null;
-
-    if (albumMatch) {
-      embedUrl = `https://bandcamp.com/EmbeddedPlayer/album=${albumMatch[1]}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
-    } else if (trackMatch) {
-      embedUrl = `https://bandcamp.com/EmbeddedPlayer/track=${trackMatch[1]}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
+    // Extract src from the iframe html field
+    const srcMatch = oembed.html && oembed.html.match(/src="([^"]+)"/);
+    if (!srcMatch) {
+      return { statusCode: 404, headers, body: JSON.stringify({ error: "Embed introuvable" }) };
     }
 
-    if (!embedUrl) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: "Embed introuvable pour cette URL" }) };
-    }
+    // Customize the embed URL colors to match diglist theme
+    let embedUrl = srcMatch[1]
+      .replace(/bgcol=[^/]+/, 'bgcol=111111')
+      .replace(/linkcol=[^/]+/, 'linkcol=e8d5a3');
+
+    // Force small artwork and large size
+    if (!embedUrl.includes('artwork=')) embedUrl += 'artwork=small/';
+    if (!embedUrl.includes('size=')) embedUrl = embedUrl.replace('/EmbeddedPlayer/', '/EmbeddedPlayer/size=large/');
 
     return { statusCode: 200, headers, body: JSON.stringify({ embedUrl }) };
   } catch (err) {
