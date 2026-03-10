@@ -640,6 +640,8 @@ function signOut() {
   const redirected = await handleAuthRedirect();
   if (redirected || await restoreSession()) {
     document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadItems();
   }
 })();
 
