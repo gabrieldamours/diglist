@@ -69,22 +69,22 @@
     transition: border-color 0.15s;
   }
 
-.auth-input:focus { border-color: var(--accent); }
+  .auth-input:focus { border-color: var(--accent); }
 
-.auth-btn {
-  padding: 0.55rem 1.2rem;
-  background: var(--accent);
-  color: #111;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.auth-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+  .auth-btn {
+    padding: 0.55rem 1.2rem;
+    background: var(--accent);
+    color: #111;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .auth-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   .auth-error {
     color: var(--danger);
@@ -188,9 +188,7 @@
     display: inline-block;
   }
   .item-checkbox:hover { border-color: var(--accent); }
-  .item-checkbox:checked {
-    border-color: var(--accent);
-  }
+  .item-checkbox:checked { border-color: var(--accent); }
   .item-checkbox:checked::after {
     content: '';
     position: absolute;
@@ -484,50 +482,51 @@
 <!-- Auth -->
 <div id="auth-screen">
   <div class="auth-title">diglist</div>
-  <div class="auth-sub" id="auth-sub">entre ton email pour recevoir un lien de connexion</div>
+  <div class="auth-sub" id="auth-sub">enter your email to receive a login link</div>
   <div class="auth-row" id="auth-row">
-    <input class="auth-input" type="email" id="auth-input" placeholder="ton@email.com" onkeydown="if(event.key==='Enter') tryAuth()">
-    <button class="auth-btn" id="auth-btn" onclick="tryAuth()">envoyer le lien</button>
+    <input class="auth-input" type="email" id="auth-input" placeholder="you@email.com" onkeydown="if(event.key==='Enter') tryAuth()">
+    <button class="auth-btn" id="auth-btn" onclick="tryAuth()">send link</button>
   </div>
   <div class="auth-error" id="auth-error"></div>
+</div>
 
 <!-- App -->
 <div id="app">
   <header>
     <div class="site-title">diglist</div>
     <div class="header-right">
-      <button class="btn secondary" onclick="exportJSON()">↓ exporter</button>
-      <button class="btn secondary" onclick="document.getElementById('import-input').click()">↑ importer</button>
+      <button class="btn secondary" onclick="exportJSON()">↓ export</button>
+      <button class="btn secondary" onclick="document.getElementById('import-input').click()">↑ import</button>
       <input type="file" id="import-input" accept=".json" style="display:none" onchange="importJSON(event)">
-      <button class="btn secondary" onclick="signOut()">déconnexion</button>
-      <button class="btn" onclick="openAddModal()">+ ajouter</button>
+      <button class="btn secondary" onclick="signOut()">sign out</button>
+      <button class="btn" onclick="openAddModal()">+ add</button>
     </div>
   </header>
 
   <div class="toolbar">
-    <input class="search-input" type="text" placeholder="chercher..." id="search-input" oninput="render()">
+    <input class="search-input" type="text" placeholder="search..." id="search-input" oninput="render()">
     <select class="filter-select" id="filter-status" onchange="render()">
-      <option value="all">tout</option>
-      <option value="pending">à écouter</option>
-      <option value="listening">en cours</option>
-      <option value="done">écouté</option>
+      <option value="all">all</option>
+      <option value="pending">to listen</option>
+      <option value="listening">in progress</option>
+      <option value="done">listened</option>
     </select>
     <select class="filter-select" id="filter-tag" onchange="render()">
-      <option value="">tous les tags</option>
+      <option value="">all tags</option>
     </select>
   </div>
 
   <div class="batch-bar" id="batch-bar">
-    <span class="batch-label" id="batch-label">0 sélectionnés</span>
+    <span class="batch-label" id="batch-label">0 selected</span>
     <select class="filter-select" id="batch-status">
-      <option value="">— changer le statut —</option>
-      <option value="pending">À écouter</option>
-      <option value="listening">En cours</option>
-      <option value="done">Écouté</option>
+      <option value="">— change status —</option>
+      <option value="pending">To listen</option>
+      <option value="listening">In progress</option>
+      <option value="done">Listened</option>
     </select>
-    <button class="btn" onclick="applyBatchStatus()">appliquer</button>
-    <button class="btn secondary" onclick="batchDelete()" style="border-color:var(--danger);color:var(--danger)">supprimer</button>
-    <button class="btn secondary" onclick="clearSelection()">annuler</button>
+    <button class="btn" onclick="applyBatchStatus()">apply</button>
+    <button class="btn secondary" onclick="batchDelete()" style="border-color:var(--danger);color:var(--danger)">delete</button>
+    <button class="btn secondary" onclick="clearSelection()">cancel</button>
   </div>
 
   <div class="list" id="list"></div>
@@ -536,38 +535,38 @@
 <!-- Modal -->
 <div class="modal-overlay" id="modal" onclick="closeModal(event)">
   <div class="modal">
-    <div class="modal-title" id="modal-title">Ajouter</div>
+    <div class="modal-title" id="modal-title">Add</div>
     <div class="field">
-      <label>Lien (Bandcamp, Soundcloud, etc.)</label>
+      <label>Link (Bandcamp, Soundcloud, etc.)</label>
       <input type="url" id="f-url" placeholder="https://..." oninput="autofillFromUrl()">
     </div>
     <div class="field">
-      <label>Titre / album</label>
-      <input type="text" id="f-title" placeholder="Nom de l'album ou du track">
+      <label>Title / album</label>
+      <input type="text" id="f-title" placeholder="Album or track name">
     </div>
     <div class="field">
-      <label>Artiste</label>
-      <input type="text" id="f-artist" placeholder="Nom de l'artiste">
+      <label>Artist</label>
+      <input type="text" id="f-artist" placeholder="Artist name">
     </div>
     <div class="field">
-      <label>Tags (séparés par des virgules)</label>
-      <input type="text" id="f-tags" placeholder="ambient, électro, local...">
+      <label>Tags (comma-separated)</label>
+      <input type="text" id="f-tags" placeholder="ambient, electronic, local...">
     </div>
     <div class="field">
       <label>Notes</label>
-      <textarea id="f-note" placeholder="Recommandé par quelqu'un ? Contexte ?"></textarea>
+      <textarea id="f-note" placeholder="Recommended by someone? Any context?"></textarea>
     </div>
     <div class="field">
-      <label>Statut</label>
+      <label>Status</label>
       <select id="f-status">
-        <option value="pending">À écouter</option>
-        <option value="listening">En cours</option>
-        <option value="done">Écouté</option>
+        <option value="pending">To listen</option>
+        <option value="listening">In progress</option>
+        <option value="done">Listened</option>
       </select>
     </div>
     <div class="modal-actions">
-      <button class="btn secondary" onclick="closeModal()">annuler</button>
-      <button class="btn" id="save-btn" onclick="saveItem()">sauvegarder</button>
+      <button class="btn secondary" onclick="closeModal()">cancel</button>
+      <button class="btn" id="save-btn" onclick="saveItem()">save</button>
     </div>
   </div>
 </div>
@@ -576,10 +575,9 @@
 
 <script>
 // ── Auth ──────────────────────────────────────────────────
-// Set your password here — this will NOT be committed to the repo
 let currentSession = null;
 
-// Gestion du magic link — Supabase redirige vers l'app avec le token dans le hash
+// Handle magic link redirect — Supabase redirects to the app with the token in the hash
 async function handleAuthRedirect() {
   const hash = window.location.hash;
   if (!hash) return false;
@@ -591,7 +589,7 @@ async function handleAuthRedirect() {
 
   currentSession = { access_token: accessToken, refresh_token: refreshToken };
   sessionStorage.setItem('diglist-session', JSON.stringify(currentSession));
-  window.location.hash = ''; // nettoyer l'URL
+  history.replaceState(null, '', window.location.pathname); // clean up URL
   return true;
 }
 
@@ -608,7 +606,7 @@ async function tryAuth() {
 
   const btn = document.getElementById('auth-btn');
   btn.disabled = true;
-  btn.textContent = 'envoi en cours...';
+  btn.textContent = 'sending...';
   document.getElementById('auth-error').textContent = '';
 
   try {
@@ -621,11 +619,11 @@ async function tryAuth() {
     if (!res.ok) throw new Error(data.error);
 
     document.getElementById('auth-row').style.display = 'none';
-    document.getElementById('auth-sub').textContent = 'vérifie ta boîte mail — un lien de connexion t\'a été envoyé';
+    document.getElementById('auth-sub').textContent = 'check your inbox — a login link has been sent';
   } catch (err) {
-    document.getElementById('auth-error').textContent = err.message || 'erreur inattendue';
+    document.getElementById('auth-error').textContent = err.message || 'unexpected error';
     btn.disabled = false;
-    btn.textContent = 'envoyer le lien';
+    btn.textContent = 'send link';
   }
 }
 
@@ -651,10 +649,10 @@ let editingId = null;
 
 // ── API ───────────────────────────────────────────────────
 async function apiGet() {
-const res = await fetch('/.netlify/functions/items', {
-  headers: { Authorization: `Bearer ${currentSession.access_token}` }
-});
-  if (!res.ok) throw new Error('Erreur chargement');
+  const res = await fetch('/.netlify/functions/items', {
+    headers: { Authorization: `Bearer ${currentSession.access_token}` }
+  });
+  if (!res.ok) throw new Error('Load error');
   const rows = await res.json();
   return rows.map(r => ({ id: r.id, ...r.data }));
 }
@@ -669,7 +667,7 @@ async function apiUpsert(item) {
     },
     body: JSON.stringify({ id, data: rest }),
   });
-  if (!res.ok) throw new Error('Erreur sauvegarde');
+  if (!res.ok) throw new Error('Save error');
 }
 
 async function apiDelete(id) {
@@ -681,17 +679,17 @@ async function apiDelete(id) {
     },
     body: JSON.stringify({ id }),
   });
-  if (!res.ok) throw new Error('Erreur suppression');
+  if (!res.ok) throw new Error('Delete error');
 }
 
 // ── Load ──────────────────────────────────────────────────
 async function loadItems() {
-  document.getElementById('list').innerHTML = '<div class="empty"><div class="empty-title">chargement...</div></div>';
+  document.getElementById('list').innerHTML = '<div class="empty"><div class="empty-title">loading...</div></div>';
   try {
     items = await apiGet();
     render();
   } catch(e) {
-    showToast('Erreur de connexion à la base de données');
+    showToast('Database connection error');
   }
 }
 
@@ -705,7 +703,7 @@ function getAllTags() {
 function updateTagFilter() {
   const sel = document.getElementById('filter-tag');
   const cur = sel.value;
-  sel.innerHTML = '<option value="">tous les tags</option>';
+  sel.innerHTML = '<option value="">all tags</option>';
   getAllTags().forEach(t => {
     const opt = document.createElement('option');
     opt.value = t; opt.textContent = t;
@@ -721,7 +719,7 @@ function detectPlatform(url) {
   if (url.includes('spotify.com')) return 'Spotify';
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube';
   if (url.includes('music.apple.com')) return 'Apple Music';
-  return 'Lien';
+  return 'Link';
 }
 
 function render() {
@@ -744,16 +742,14 @@ function render() {
   const active = filtered.filter(i => i.status !== 'done');
   const done = filtered.filter(i => i.status === 'done');
 
-
-
   const list = document.getElementById('list');
 
   if (items.length === 0) {
-    list.innerHTML = `<div class="empty"><div class="empty-title">La liste est vide</div><div>Ajoute un lien Bandcamp pour commencer</div></div>`;
+    list.innerHTML = `<div class="empty"><div class="empty-title">List is empty</div><div>Add a Bandcamp link to get started</div></div>`;
     return;
   }
   if (filtered.length === 0) {
-    list.innerHTML = `<div class="empty"><div class="empty-title">Rien trouvé</div></div>`;
+    list.innerHTML = `<div class="empty"><div class="empty-title">Nothing found</div></div>`;
     return;
   }
 
@@ -770,8 +766,8 @@ function render() {
         ? `<div class="item-tags">${item.tags.map(t => `<span class="tag" onclick="filterByTag('${esc(t)}')">${esc(t)}</span>`).join('')}</div>`
         : '';
       const noteEl = item.note ? `<div class="item-note">${esc(item.note)}</div>` : '';
-      const statusLabel = { pending: 'à écouter', listening: 'en cours', done: 'écouté' }[item.status] || '';
-      const addedDate = item.addedAt ? new Date(item.addedAt).toLocaleDateString('fr-FR') : '';
+      const statusLabel = { pending: 'to listen', listening: 'in progress', done: 'listened' }[item.status] || '';
+      const addedDate = item.addedAt ? new Date(item.addedAt).toLocaleDateString('en-CA') : '';
 
       const isBandcamp = item.url && item.url.includes('bandcamp.com');
       const artworkEl = item.artworkUrl
@@ -789,7 +785,7 @@ function render() {
         ${artworkEl}
         <div class="item-left">
           <div class="item-header">
-            <span class="item-title" style="cursor:default">${esc(item.title || 'Sans titre')}</span>
+            <span class="item-title" style="cursor:default">${esc(item.title || 'Untitled')}</span>
             ${item.artist ? `<span class="item-artist">${esc(item.artist)}</span>` : ''}
           </div>
           ${linkEl}
@@ -797,13 +793,13 @@ function render() {
           ${tagsEl}
           <div class="item-meta">
             <span><span class="status-dot ${item.status||'pending'}"></span>${statusLabel}</span>
-            ${addedDate ? `<span>ajouté le ${addedDate}</span>` : ''}
-            ${isBandcamp ? `<button class="play-btn" onclick="togglePlayer('${item.id}', '${esc(item.url)}')">▶ écouter</button>` : (item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" class="play-btn">↗ ouvrir</a>` : '')}
+            ${addedDate ? `<span>added ${addedDate}</span>` : ''}
+            ${isBandcamp ? `<button class="play-btn" onclick="togglePlayer('${item.id}', '${esc(item.url)}')">▶ listen</button>` : (item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" class="play-btn">↗ open</a>` : '')}
           </div>
         </div>
         <div class="item-actions">
-          <button class="action-btn done-btn ${item.status==='done'?'active':''}" onclick="toggleDone('${item.id}')" title="Marquer écouté">✓</button>
-          <button class="action-btn" onclick="openEditModal('${item.id}')">éditer</button>
+          <button class="action-btn done-btn ${item.status==='done'?'active':''}" onclick="toggleDone('${item.id}')" title="Mark as listened">✓</button>
+          <button class="action-btn" onclick="openEditModal('${item.id}')">edit</button>
           <button class="action-btn" onclick="deleteItem('${item.id}')" style="color:var(--danger);border-color:transparent">✕</button>
         </div>
         <div class="item-player" id="player-${item.id}" style="grid-column:1/-1"></div>
@@ -835,7 +831,7 @@ function onCheckboxChange() {
   const bar = document.getElementById('batch-bar');
   if (ids.length > 0) {
     bar.classList.add('visible');
-    document.getElementById('batch-label').textContent = `${ids.length} sélectionné${ids.length > 1 ? 's' : ''}`;
+    document.getElementById('batch-label').textContent = `${ids.length} selected`;
   } else {
     bar.classList.remove('visible');
   }
@@ -850,22 +846,22 @@ function clearSelection() {
 async function batchDelete() {
   const ids = getSelectedIds();
   if (ids.length === 0) return;
-  if (!confirm(`Supprimer ${ids.length} item${ids.length > 1 ? 's' : ''} ?`)) return;
+  if (!confirm(`Delete ${ids.length} item${ids.length > 1 ? 's' : ''}?`)) return;
 
   try {
     await Promise.all(ids.map(id => apiDelete(id)));
     items = items.filter(i => !ids.includes(i.id));
     clearSelection();
     render();
-    showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} supprimé${ids.length > 1 ? 's' : ''}`);
+    showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} deleted`);
   } catch(e) {
-    showToast('Erreur lors de la suppression');
+    showToast('Error deleting items');
   }
 }
 
 async function applyBatchStatus() {
   const status = document.getElementById('batch-status').value;
-  if (!status) { showToast('Choisis un statut'); return; }
+  if (!status) { showToast('Pick a status'); return; }
   const ids = getSelectedIds();
   if (ids.length === 0) return;
 
@@ -881,9 +877,9 @@ async function applyBatchStatus() {
     }));
     clearSelection();
     render();
-    showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} mis à jour`);
+    showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} updated`);
   } catch(e) {
-    showToast('Erreur lors de la mise à jour');
+    showToast('Error updating items');
   } finally {
     btn.disabled = false;
   }
@@ -898,7 +894,7 @@ async function togglePlayer(id, url) {
     el.classList.remove('open');
     const cid = el.id.replace('player-', '');
     const cBtn = document.querySelector(`#chk-${cid}`)?.closest('.item')?.querySelector('.play-btn');
-    if (cBtn) cBtn.textContent = '▶ écouter';
+    if (cBtn) cBtn.textContent = '▶ listen';
     setTimeout(() => { el.innerHTML = ''; }, 350);
   }
 
@@ -911,10 +907,10 @@ async function togglePlayer(id, url) {
   document.querySelectorAll('.item-player.open').forEach(el => closePlayer(el));
 
   playerEl.classList.add('open');
-  playerEl.innerHTML = '<div class="player-loading">chargement du player...</div>';
+  playerEl.innerHTML = '<div class="player-loading">loading player...</div>';
 
   const playBtn = document.querySelector(`#chk-${id}`)?.closest('.item')?.querySelector('.play-btn');
-  if (playBtn) playBtn.textContent = '✕ fermer';
+  if (playBtn) playBtn.textContent = '✕ close';
 
   try {
     const res = await fetch(`/.netlify/functions/embed?url=${encodeURIComponent(url)}`);
@@ -922,17 +918,17 @@ async function togglePlayer(id, url) {
     if (data.embedUrl) {
       playerEl.innerHTML = `<iframe src="${data.embedUrl}" seamless></iframe>`;
     } else {
-      playerEl.innerHTML = `<div class="player-error">${data.error || 'Player indisponible'}</div>`;
+      playerEl.innerHTML = `<div class="player-error">${data.error || 'Player unavailable'}</div>`;
     }
   } catch(e) {
-    playerEl.innerHTML = '<div class="player-error">Erreur de chargement</div>';
+    playerEl.innerHTML = '<div class="player-error">Load error</div>';
   }
 }
 
 // ── Modal ─────────────────────────────────────────────────
 function openAddModal() {
   editingId = null;
-  document.getElementById('modal-title').textContent = 'Ajouter';
+  document.getElementById('modal-title').textContent = 'Add';
   ['f-url','f-title','f-artist','f-tags','f-note'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-status').value = 'pending';
   document.getElementById('modal').classList.add('open');
@@ -943,7 +939,7 @@ function openEditModal(id) {
   const item = items.find(i => i.id === id);
   if (!item) return;
   editingId = id;
-  document.getElementById('modal-title').textContent = 'Éditer';
+  document.getElementById('modal-title').textContent = 'Edit';
   document.getElementById('f-url').value = item.url || '';
   document.getElementById('f-title').value = item.title || '';
   document.getElementById('f-artist').value = item.artist || '';
@@ -987,12 +983,12 @@ async function saveItem() {
   const note = document.getElementById('f-note').value.trim();
   const status = document.getElementById('f-status').value;
 
-  if (!url && !title) { showToast('Ajoute au moins un lien ou un titre.'); return; }
+  if (!url && !title) { showToast('Add at least a link or a title.'); return; }
 
   const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
   const btn = document.getElementById('save-btn');
   btn.disabled = true;
-  btn.textContent = 'chargement...';
+  btn.textContent = 'saving...';
 
   try {
     // Fetch artwork for Bandcamp URLs on new items
@@ -1022,10 +1018,10 @@ async function saveItem() {
     document.getElementById('modal').classList.remove('open');
     render();
   } catch(e) {
-    showToast('Erreur lors de la sauvegarde');
+    showToast('Error saving item');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'sauvegarder';
+    btn.textContent = 'save';
   }
 }
 
@@ -1037,18 +1033,18 @@ async function toggleDone(id) {
     await apiUpsert(item);
     render();
   } catch(e) {
-    showToast('Erreur lors de la mise à jour');
+    showToast('Error updating item');
   }
 }
 
 async function deleteItem(id) {
-  if (!confirm('Supprimer cet item ?')) return;
+  if (!confirm('Delete this item?')) return;
   try {
     await apiDelete(id);
     items = items.filter(i => i.id !== id);
     render();
   } catch(e) {
-    showToast('Erreur lors de la suppression');
+    showToast('Error deleting item');
   }
 }
 
@@ -1075,7 +1071,7 @@ async function importJSON(event) {
     imported = JSON.parse(text);
     if (!Array.isArray(imported)) throw new Error();
   } catch(e) {
-    showToast('Fichier JSON invalide');
+    showToast('Invalid JSON file');
     return;
   }
 
@@ -1083,7 +1079,7 @@ async function importJSON(event) {
   const toAdd = imported.filter(i => i.id && !existingIds.has(i.id));
 
   if (toAdd.length === 0) {
-    showToast('Aucun nouvel item à importer');
+    showToast('No new items to import');
     return;
   }
 
@@ -1091,9 +1087,9 @@ async function importJSON(event) {
     await Promise.all(toAdd.map(item => apiUpsert(item)));
     items.unshift(...toAdd);
     render();
-    showToast(`${toAdd.length} item${toAdd.length > 1 ? 's' : ''} importé${toAdd.length > 1 ? 's' : ''} (${imported.length - toAdd.length} skippé${imported.length - toAdd.length > 1 ? 's' : ''})`);
+    showToast(`${toAdd.length} item${toAdd.length > 1 ? 's' : ''} imported (${imported.length - toAdd.length} skipped)`);
   } catch(e) {
-    showToast('Erreur lors de l\'import');
+    showToast('Import error');
   }
 }
 

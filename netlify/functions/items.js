@@ -12,7 +12,7 @@ exports.handler = async function (event) {
 
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: "Non authentifié" }) };
+    return { statusCode: 401, headers, body: JSON.stringify({ error: "Unauthenticated" }) };
   }
   const userToken = authHeader.replace("Bearer ", "");
 
@@ -31,21 +31,21 @@ exports.handler = async function (event) {
       return { statusCode: 200, headers, body: JSON.stringify(data) };
     }
 
-if (event.httpMethod === "POST") {
-  const body = JSON.parse(event.body);
+    if (event.httpMethod === "POST") {
+      const body = JSON.parse(event.body);
 
-  // Décoder le user_id depuis le JWT
-  const payload = JSON.parse(Buffer.from(userToken.split('.')[1], 'base64').toString());
-  const user_id = payload.sub;
+      // Decode user_id from JWT
+      const payload = JSON.parse(Buffer.from(userToken.split('.')[1], 'base64').toString());
+      const user_id = payload.sub;
 
-  const res = await fetch(base, {
-    method: "POST",
-    headers: { ...sbHeaders, Prefer: "resolution=merge-duplicates,return=representation" },
-    body: JSON.stringify({ ...body, user_id }),
-  });
-  const data = await res.json();
-  return { statusCode: 200, headers, body: JSON.stringify(data) };
-}
+      const res = await fetch(base, {
+        method: "POST",
+        headers: { ...sbHeaders, Prefer: "resolution=merge-duplicates,return=representation" },
+        body: JSON.stringify({ ...body, user_id }),
+      });
+      const data = await res.json();
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
 
     if (event.httpMethod === "DELETE") {
       const { id } = JSON.parse(event.body);
