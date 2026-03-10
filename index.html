@@ -68,7 +68,23 @@
     width: 240px;
     transition: border-color 0.15s;
   }
-  .auth-input:focus { border-color: var(--accent); }
+
+.auth-input:focus { border-color: var(--accent); }
+
+.auth-btn {
+  padding: 0.55rem 1.2rem;
+  background: var(--accent);
+  color: #111;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.auth-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
   .auth-error {
     color: var(--danger);
@@ -468,13 +484,12 @@
 <!-- Auth -->
 <div id="auth-screen">
   <div class="auth-title">diglist</div>
-  <div class="auth-sub">entre ton mot de passe pour continuer</div>
-  <div class="auth-row">
-    <input class="auth-input" type="password" id="auth-input" placeholder="mot de passe" onkeydown="if(event.key==='Enter') tryAuth()">
-    <button class="btn" onclick="tryAuth()">entrer</button>
+  <div class="auth-sub" id="auth-sub">entre ton email pour recevoir un lien de connexion</div>
+  <div class="auth-row" id="auth-row">
+    <input class="auth-input" type="email" id="auth-input" placeholder="ton@email.com" onkeydown="if(event.key==='Enter') tryAuth()">
+    <button class="auth-btn" id="auth-btn" onclick="tryAuth()">envoyer le lien</button>
   </div>
   <div class="auth-error" id="auth-error"></div>
-</div>
 
 <!-- App -->
 <div id="app">
@@ -484,6 +499,7 @@
       <button class="btn secondary" onclick="exportJSON()">↓ exporter</button>
       <button class="btn secondary" onclick="document.getElementById('import-input').click()">↑ importer</button>
       <input type="file" id="import-input" accept=".json" style="display:none" onchange="importJSON(event)">
+      <button class="btn secondary" onclick="signOut()">déconnexion</button>
       <button class="btn" onclick="openAddModal()">+ ajouter</button>
     </div>
   </header>
@@ -561,29 +577,69 @@
 <script>
 // ── Auth ──────────────────────────────────────────────────
 // Set your password here — this will NOT be committed to the repo
-// when you deploy to Netlify, set DIGLIST_PASSWORD as an env variable instead
-const PASSWORD = "changeme";
+let currentSession = null;
 
-function tryAuth() {
-  const val = document.getElementById('auth-input').value;
-  if (val === PASSWORD) {
-    sessionStorage.setItem('diglist-auth', val);
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadItems();
-  } else {
-    document.getElementById('auth-error').textContent = 'mot de passe incorrect';
-    document.getElementById('auth-input').value = '';
+// Gestion du magic link — Supabase redirige vers l'app avec le token dans le hash
+async function handleAuthRedirect() {
+  const hash = window.location.hash;
+  if (!hash) return false;
+
+  const params = new URLSearchParams(hash.replace('#', ''));
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+  if (!accessToken) return false;
+
+  currentSession = { access_token: accessToken, refresh_token: refreshToken };
+  sessionStorage.setItem('diglist-session', JSON.stringify(currentSession));
+  window.location.hash = ''; // nettoyer l'URL
+  return true;
+}
+
+async function restoreSession() {
+  const saved = sessionStorage.getItem('diglist-session');
+  if (!saved) return false;
+  currentSession = JSON.parse(saved);
+  return true;
+}
+
+async function tryAuth() {
+  const email = document.getElementById('auth-input').value.trim();
+  if (!email) return;
+
+  const btn = document.getElementById('auth-btn');
+  btn.disabled = true;
+  btn.textContent = 'envoi en cours...';
+  document.getElementById('auth-error').textContent = '';
+
+  try {
+    const res = await fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    document.getElementById('auth-row').style.display = 'none';
+    document.getElementById('auth-sub').textContent = 'vérifie ta boîte mail — un lien de connexion t\'a été envoyé';
+  } catch (err) {
+    document.getElementById('auth-error').textContent = err.message || 'erreur inattendue';
+    btn.disabled = false;
+    btn.textContent = 'envoyer le lien';
   }
 }
 
-// Auto-login if password is stored in sessionStorage
-(function() {
-  const saved = sessionStorage.getItem('diglist-auth');
-  if (saved === PASSWORD) {
+function signOut() {
+  sessionStorage.removeItem('diglist-session');
+  currentSession = null;
+  location.reload();
+}
+
+// Init auth
+(async () => {
+  const redirected = await handleAuthRedirect();
+  if (redirected || await restoreSession()) {
     document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadItems();
   }
 })();
 
@@ -593,7 +649,9 @@ let editingId = null;
 
 // ── API ───────────────────────────────────────────────────
 async function apiGet() {
-  const res = await fetch('/.netlify/functions/items');
+const res = await fetch('/.netlify/functions/items', {
+  headers: { Authorization: `Bearer ${currentSession.access_token}` }
+});
   if (!res.ok) throw new Error('Erreur chargement');
   const rows = await res.json();
   return rows.map(r => ({ id: r.id, ...r.data }));
@@ -603,7 +661,10 @@ async function apiUpsert(item) {
   const { id, ...rest } = item;
   const res = await fetch('/.netlify/functions/items', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${currentSession.access_token}`
+    },
     body: JSON.stringify({ id, data: rest }),
   });
   if (!res.ok) throw new Error('Erreur sauvegarde');
@@ -612,7 +673,10 @@ async function apiUpsert(item) {
 async function apiDelete(id) {
   const res = await fetch('/.netlify/functions/items', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${currentSession.access_token}`
+    },
     body: JSON.stringify({ id }),
   });
   if (!res.ok) throw new Error('Erreur suppression');
