@@ -47,7 +47,8 @@ exports.handler = async function (event) {
         const id = tralbum.id;
         const isAlbum = url.includes('/album/');
         const type = isAlbum ? 'album' : 'track';
-        embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
+        const trackParam = isAlbum ? 'track_num=1/' : '';
+        embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/${trackParam}transparent=true/`;
       } catch(e) {}
     }
 
@@ -60,7 +61,8 @@ exports.handler = async function (event) {
           const id = data.id;
           const isAlbum = url.includes('/album/');
           const type = isAlbum ? 'album' : 'track';
-          embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
+          const trackParam = isAlbum ? 'track_num=1/' : '';
+          embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/${trackParam}transparent=true/`;
         } catch(e) {}
       }
     }
@@ -87,7 +89,8 @@ exports.handler = async function (event) {
       if (idFromMeta) {
         const isAlbum = url.includes('/album/');
         const type = isAlbum ? 'album' : 'track';
-        embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${idFromMeta[1]}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/transparent=true/`;
+        const trackParam = isAlbum ? 'track_num=1/' : '';
+        embedUrl = `https://bandcamp.com/EmbeddedPlayer/${type}=${idFromMeta[1]}/size=large/bgcol=111111/linkcol=e8d5a3/artwork=small/${trackParam}transparent=true/`;
       }
     }
 
